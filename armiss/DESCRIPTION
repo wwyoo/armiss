@@ -4,7 +4,7 @@ Title: Gaussian Imputation for AR Process with Missing Values
 Version: 1.0
 Date: 2013-01-27
 Author: William Weimin Yoo
-Maintainer: William Weimin Yoo <wyoo@ncsu.edu>
+Maintainer: William Weimin Yoo <yooweimin0203@gmail.com>
 Depends: mvtnorm
 Description: This package estimates parameters in an AR process using data with mising values
 License: GPL(>=2)
