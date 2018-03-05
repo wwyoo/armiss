@@ -1,0 +1,155 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath,amssymb,float,multirow,graphicx,fullpage,amsthm,url}
+\usepackage[round]{natbib}
+\usepackage{Sweave}
+
+%\VignetteIndexEntry{R-package armiss: A Tutorial}
+\title{R-package \texttt{armiss}: A Tutorial}
+\author{William Weimin Yoo}
+
+\renewcommand{\baselinestretch}{1.5}
+\numberwithin{equation}{section}
+\newcommand{\E}{\text{E}}
+\newcommand{\var}{\text{var}}
+\newcommand{\rank}{\text{rank}}
+\newcommand{\N}{\text{N}}
+\newtheorem{KLconv}{Theorem}
+\newtheorem{Quad}{Lemma}
+\begin{document}
+\maketitle
+\section{Introduction}
+Missing values are a common phenomenon in data analysis, and is particular so for data collected over time. Time series with missing observations are irregularly spaced, and as a result standard estimation methods in time series analysis are not directly applicable. The base \texttt{R} package
+\texttt{stats} contains many functions that will do parameter estimation if we are willing to assume certain parametric models for our time series data. For
+example, the $\texttt{ar.mle}$ function fits an autoregressive (AR) process using maximum likelihood where the order is selected using the Akaike Information
+Criterion (AIC). However by default, these functions do not accept data with missing values. There are various methods proposed in the literature to deal with
+missing values in time series analysis. However, most of these methods are computationally expensive and are not viable for long data series. Therefore, the
+author and Dr. Sujit Ghosh have proposed a simple and effective method to deal with this problem. This method first reorders the series into the observed and
+missing parts respectively using a permutation matrix, missing data are then imputed using the conditional Gaussian distribution based on the observed data. The
+reconstructed series is then used to do parameter estimation. An \texttt{R} package called \texttt{armiss} was written for this proposed methodology, and is based on the working paper titled ``Gaussian Imputation of an ARMA Process with Missing Values".
+
+\section{Imputation via conditional Gaussian distribution}
+We will give a brief overview of our proposed imputation method. Given a time series $\{X_t, t=1,2,\ldots,T\}$, suppose we only get to observe a subset of this
+series due to missing values. Specifically, for some indices $1\leq t_1 \leq t_2 \leq\ldots\leq t_n \leq T$, we observed $\{X_{t_1}, X_{t_2}, \ldots, X_{t_n}\}$.
+We first assume that there is an underlying process $\mathbf{Y}=(Y_1,Y_2,\ldots,Y_T)^{'}$ that generated the observed series $\{X_{t_1}, X_{t_2}, \ldots,
+X_{t_n}\}$. That is for $t\in\{t_1, t_2, \ldots, t_n\}$, we have $Y_t\overset{d}{=}X_t$ with $\overset{d}{=}$ denoting equal in distribution. While for
+$t\notin\{t_1, t_2, \ldots, t_n\}$, we do not observe $Y_t$ due to missing values. For simplicity, we assume that $\mathbf{Y}$ is generated from an
+autoregressive process of some order $p$, denoted as AR($p$),
+\begin{equation}
+Y_t=\mu+\sum_{i=1}^{\min{\{p,t-1\}}}\phi_i(Y_{t-i}-\mu)+\epsilon_t,
+\end{equation}
+where $\mu=\E(Y_t)$ is the process mean. Also, we assume that $\{\epsilon_t\}$ are independent and identically (i.i.d) normally distributed with mean zero and
+finite variance $\sigma^2$. The AR coefficients $\{\phi_i\}$ satisfy the necessary constraints for weak stationarity. Therefore, $\mathbf{Y}$ is normally
+distributed with mean $\mu\mathbf{1}_T$ and covariance matrix $\mathbf{\Sigma}$, where the $i$, $j$ element of $\mathbf{\Sigma}$ is given by
+$\mathbf{\Sigma}_{ij}=\gamma(|i-j|)$, and $\gamma(h)$ is the autocovariance function at time lag $h$ for an AR($p$) process. Let $\boldsymbol{\theta}=(\mu,
+\phi_1, \ldots, \phi_p, \sigma^2, p)^{'}$ be the parameter vector for this model setting. Our aim is to estimate $\boldsymbol{\theta}$ given the incomplete
+observations $\{X_{t_1}, X_{t_2}, \ldots, X_{t_n}\}$. \\
+
+Now, for any given $\boldsymbol{\theta}$, we begin by reordering the elements of $\mathbf{Y}$ using a permutation matrix $\mathbf{P}$, so as to partition
+$\mathbf{Y}$ into the vector of observed values $\mathbf{Y}_O$ and the vector of missing values $\mathbf{Y}_M$ respectively
+\begin{equation}
+\mathbf{P}\mathbf{Y}=\begin{pmatrix}
+\mathbf{P}_O\\
+\mathbf{P}_M\end{pmatrix}\mathbf{Y}=\begin{pmatrix}
+\mathbf{Y}_O\\
+\mathbf{Y}_M\end{pmatrix}\overset{d}{=}\begin{pmatrix}
+\mathbf{X}_O\\
+\mathbf{Y}_M\end{pmatrix},
+\end{equation}
+where $\mathbf{X}_O=(X_{t_1}, X_{t_2}, \ldots, X_{t_n})^{'}$ denotes the observed values. An \texttt{R} function \texttt{elem} was written to accomplish this task. The
+\texttt{elem(data, sym = NA)} function has two arguments, the first is the data itself and the second \texttt{sym} is symbol or indicator used to represent missing
+values. The input for \texttt{data} argument must be a vector with numeric entries. If missing values are encoded with characters, then a \texttt{list} object may be used
+for the data, in which case the input for \texttt{sym} must be delimited by quotation marks, i.e.\ ``missing". The default symbol used is NA. As an example, suppose
+our data is \texttt{c(1, 2, 8888, 4, 8888)} with \texttt{8888} denoting missing observations. Then this function will create the corresponding permutation matrix, $P$
+that will separate the observed and missing values. Multiplying $P$ and \texttt{(1, 2, 8888, 4, 8888)} will give us \texttt{(1, 2, 4, 8888, 8888)}.
+<<>>=
+library(armiss)
+x <- c(1, 2, 8888, 4, 8888)
+P <- elem(data = x, sym = 8888)
+P  #permutation matrix
+as.vector(t(P %*% x))
+@
+
+It then follows that $\mathbf{P}\mathbf{Y}$ is normally distributed with distribution given by,
+\begin{equation}
+\mathbf{P}\mathbf{Y}\sim \N\left(\mu\mathbf{1}_T, \begin{bmatrix}\mathbf{P}_O\mathbf{\Sigma}\mathbf{P}_O^{'}&\mathbf{P}_O\mathbf{\Sigma}\mathbf{P}_M^{'}\\
+\mathbf{P}_M\mathbf{\Sigma}\mathbf{P}_O^{'}&\mathbf{P}_M\mathbf{\Sigma}\mathbf{P}_M^{'}\end{bmatrix}=\begin{bmatrix}\mathbf{\Sigma}_{OO}&\mathbf{\Sigma}_{OM}\\
+\mathbf{\Sigma}_{MO}&\mathbf{\Sigma}_{MM}\end{bmatrix}\right).
+\end{equation}
+An \texttt{R} function was written to construct $\mathbf{\Sigma}$, which is the covariance matrix for an AR($p$) process. The function is \texttt{covmat(phi,
+sigma2)} with two arguments. The input for \texttt{phi} is a vector of AR coefficients and for \texttt{sigma2} is the innovation variance
+$\sigma^2$. The AR coefficients must satisfy the necessary stationarity conditions. This function calls upon the \texttt{ARMAacf} function from the
+\texttt{stats} package that computes the autocorrelation function for a given set of AR coefficients. Continuing from the previous example above, let \texttt{phi
+= c(0.5, 0.2)} and \texttt{sigma2 = 1} for an AR(2) process,
+<<>>=
+N <- length(x)  #data length
+phi = c(0.5, 0.2)  #AR(2)
+sigma2 = 1  #innovation variance
+covmat(phi = phi, sigma2 = sigma2, N = N)
+@
+
+Therefore, the conditional distribution of $\mathbf{Y}_M$ given $\mathbf{Y}_O$ is normally distributed, and since $\mathbf{Y}_O$ and $\mathbf{X}_O$ are equal in
+distribution, we can write
+\begin{equation}\label{eq:impute}
+\mathbf{Y}_M|\mathbf{X}_O\sim \N(\boldsymbol{\mu}_{M|O}, \mathbf{\Sigma}_{M|O}),
+\end{equation}
+where
+\begin{align}\label{eq:condmeanvar}
+\boldsymbol{\mu}_{M|O}&=\boldsymbol{\mu}_M+\mathbf{\Sigma}_{MO}\mathbf{\Sigma}_{OO}^{-1}(\mathbf{X}_O-\boldsymbol{\mu}_O)\nonumber\\
+\mathbf{\Sigma}_{M|O}&=\mathbf{\Sigma}_{MM}-\mathbf{\Sigma}_{MO}\mathbf{\Sigma}_{OO}^{-1}\mathbf{\Sigma}_{OM},
+\end{align}
+for $\boldsymbol{\mu}_M=\mu\mathbf{P}_M\mathbf{1}_T$ and $\boldsymbol{\mu}_O=\mu\mathbf{P}_O\mathbf{1}_T$. Based on this setup, we impute the missing values by
+generating samples from~\eqref{eq:impute}, that is, $\mathbf{Y}_O^{+}\sim\N(\boldsymbol{\mu}_{M|O},\mathbf{\Sigma}_{M|O})$. We then append the imputed values
+$\mathbf{Y}_O^{+}$ to $\mathbf{X}_O$. Applying the matrix inverse of $\mathbf{P}$ to this appended series will yield the reconstruction of $\mathbf{Y}$, which we
+will denote as $\mathbf{Y}^{+}$. \\
+
+In real life applications, the parameters $\boldsymbol{\theta}$ is not known and have to be estimated from the data. Now, given time series data with missing
+observations, our proposed method can be summarized in an algorithm.
+\begin{enumerate}
+\item Obtain initial estimates of $\boldsymbol{\theta}$ based on $\mathbf{X}_O$ by treating $\mathbf{X}_O$ as the complete series. We used the \texttt{R} function
+    \texttt{ar.yw} to get these estimates using Yule-Walker (methods of moments) by fitting an AR(1) process. Let $\hat{\boldsymbol{\theta}}^{(0)}$ be the 
+    initial estimates
+\item Use $\hat{\boldsymbol{\theta}}^{(0)}$ to conduct the imputation method as described above to get the reconstructed series $\mathbf{Y}^{+}$
+\item Use $\mathbf{Y}^{+}$ to reestimate $\boldsymbol{\theta}$ using \texttt{ar.mle}, which will simultaneously estimate $\boldsymbol{\theta}$ and choose the
+    optimal order $p$ using AIC. Update $\hat{\boldsymbol{\theta}}^{(0)}$ to $\hat{\boldsymbol{\theta}}^{(1)}$
+\item Repeat steps 2 and 3 until the parameter estimates converged, where the convergence criterion is judged by (at the $k+1$ iterate),
+\begin{equation*}
+|l(\hat{\boldsymbol{\theta}}^{(k+1)};\mathbf{X}_O)-l(\hat{\boldsymbol{\theta}}^{(k)};\mathbf{X}_O)|<\epsilon|l(\hat{\boldsymbol{\theta}}^{(k)};\mathbf{X}_O)|.
+\end{equation*}
+Here, $l(\hat{\boldsymbol{\theta}}^{(k+1)};\mathbf{X}_O)$ is the log likelihood function of $\hat{\boldsymbol{\theta}}^{(k+1)}$ evaluated at the observed data
+$\mathbf{X}_O$, and $\epsilon$ is a tuning parameter that controls the rate of convergence. 
+\end{enumerate}
+
+For an illustration, we use the data provided in the package. This data is a simulated time series from an AR(1) process $\mu=0, \phi=0.5, \sigma^2=1$ with 365
+data points. Missing values are assumed to be missing at random. There are 165 randomly missing observations among the 365 data points. Missing values are
+encoded with NA.
+<<>>=
+data(ar1sim)
+ar1sim[1:20]  #first 20 observations
+@
+The \texttt{R} function \texttt{ar.miss} implements the proposed method/algorithm described above. The arguments of this function are \texttt{ar.miss(data, epsilon =
+0.001, order = NULL, max.iter = 100, sym = NA, control.optim = list(maxit = 200))}. The input for the first argument is the time series data. Currently, only a single time series is supported. We are now working on extending this proposed method to multiple time series. The observed part of the data must be numeric, which can be a vector or a time series (\texttt{ts}) object. However, as mentioned before, if missing values are encoded as characters, then a list might be employed. The next argument controls the parameter convergence in Step 4 of the algorithm, where the default value is 0.001. If we have some a priori knowledge of the process order, then we can specify it in the \texttt{order} argument. In this case, the AIC selection procedure in Step 3 is skipped. \\
+
+The \texttt{max.iter} argument controls the number of iteration of the algorithm, and has an upper limit of 100 by default. The iteration for the proposed algorithm terminates when the convergence criterion is satisfied. However, in some series that resemble a unit root process, it takes a substantial amount of iteration ($>100$) to reach convergence. Hence, this is put in place to ensure reasonable running time for a variety of series. The \texttt{sym} argument is the same as discussed for the \texttt{elem} function, which is the symbol encoding missing data. The last argument is the list of control variables for the \texttt{optim} function, embedded in the \texttt{ar.mle} function to maximize the likelihood. By default, \texttt{ar.mle} uses BFGS updating. Here we set BFGS iteration limit to 200. To conduct the imputation, the function calls upon \texttt{elem} to compute the permutation matrix $P$ and \texttt{covmat} to construct the covariance matrix $\mathbf{\Sigma}$. \\
+
+Using the \texttt{ar1sim} data, we then try to estimate $\boldsymbol{\theta}$ with the \texttt{ar.miss} function,
+<<>>=
+set.seed(2345) #to get same answers as in this example
+ar.miss(data = ar1sim)
+@
+
+Recall the true values are $\mu=0, \phi=0.5, \sigma^2=1$. We see that this proposed method seems to work fine, with estimates close to the population values. In
+fact, even with missing data, the method was able to detect the true AR order. We also note that this method is fast and efficient, at least for this example.
+
+\section{Conclusions and discussions}
+The package \texttt{armiss} implements the method/algorithm described in the previous section. The proposed method offers a simple and statistically sound way to
+do imputation in time series analysis, if we are willing to adopt certain parametric models (an AR($p$) for our package). However, we can easily generalize to
+include the autoregressive moving average (ARMA) models by modifying the \texttt{covmat} function to construct ARMA covariance matrices, and use the
+\texttt{arima} function to do estimation. As mentioned before, we are currently working on extending to multiple time series collected over multiple locations,
+each with different patterns of missing values. Also, another direction that we are working on is to use the same imputation framework in a non-parametric
+time series model. We are hoping to extend the basic functionalities of the \texttt{armiss} package to include these more general cases in the future.
+
+\nocite{*}
+\newpage
+\bibliographystyle{plainnat}
+\bibliography{refproj1}
+\end{document}

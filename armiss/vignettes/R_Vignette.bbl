@@ -1,0 +1,79 @@
+\begin{thebibliography}{11}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Brockwell and Davis(1986)]{brockwell}
+P.~J. Brockwell and R.~A. Davis.
+\newblock \emph{Time series: theory and methods}.
+\newblock Springer-Verlag New York, Inc., New York, NY, USA, 1986.
+
+\bibitem[Chen(2005)]{aqua}
+W.~Chen.
+\newblock \emph{Techniques in Aquatic Toxicology, Volume 2}, chapter 21. Simple
+  methods for estimating exposure concentrations of pesticide resulting from
+  non-point source applications in agricultural drainage networks, pages
+  357--382.
+\newblock CRC Press, 2005.
+
+\bibitem[Gardner et~al.(1980)Gardner, Harvey, and Phillips]{arima0}
+G.~Gardner, A.~C. Harvey, and G.~D.~A. Phillips.
+\newblock Algorithm as154. an algorithm for exact maximum likelihood estimation
+  of autoregressive-moving average models by means of kalman filtering.
+\newblock \emph{Applied Statistics}, 29:\penalty0 311--322, 1980.
+
+\bibitem[Hall(1992)]{peter}
+P.~Hall.
+\newblock \emph{The Boostrap and Edgeworth Expansion}.
+\newblock Springer-Verlag New York, Inc., New York, NY, USA, 1992.
+
+\bibitem[Hall et~al.(1993)Hall, Hardle, and
+  Simar]{RePEc:eee:csdana:v:16:y:1993:i:1:p:11-18}
+P.~Hall, W.~Hardle, and L.~Simar.
+\newblock On the inconsistency of bootstrap distribution estimators.
+\newblock \emph{Computational Statistics \& Data Analysis}, 16\penalty0
+  (1):\penalty0 11--18, June 1993.
+
+\bibitem[Jones(1980)]{jones}
+R.~H. Jones.
+\newblock Maximum likelihood fitting of arma models to time series with missing
+  observations.
+\newblock \emph{Technometrics}, 22\penalty0 (3):\penalty0 pp. 389--395, 1980.
+
+\bibitem[Leadbetter et~al.(1983)Leadbetter, Lindgren, and Rootz\'{e}n]{extreme}
+M.~R. Leadbetter, G.~Lindgren, and H.~Rootz\'{e}n.
+\newblock \emph{Extremes And Related Properties Of Random Sequences And
+  Processes}.
+\newblock Springer-Verlag New York, Inc., New York, NY, USA, 1983.
+
+\bibitem[Lindstr\"{o}m et~al.(2011)Lindstr\"{o}m, Szpiro, Sampson, Sheppard,
+  Oron, Richards, and Larson]{lindstrom}
+J.~Lindstr\"{o}m, A.~A. Szpiro, P.~D. Sampson, L.~Sheppard, A.~P. Oron,
+  M.~Richards, and T.~Larson.
+\newblock A flexible spatio-temporal model for air pollution: Allowing for
+  spatio-temporal covariates.
+\newblock \emph{UW Biostatistics Working Paper Series}, page 370, 2011.
+
+\bibitem[Miroslava(2009)]{unkasevic2009extreme}
+U.~Miroslava.
+\newblock The extreme value distribution of rainfall data at belgrade,
+  yugoslavia.
+\newblock \emph{Atm{\'o}sfera}, 5\penalty0 (1), 2009.
+
+\bibitem[Park et~al.(2007)Park, Genton, and Ghosh]{cenAR}
+J.~W. Park, M.~G. Genton, and S.~K. Ghosh.
+\newblock Censored time series analaysis with autoregressive moving average
+  models.
+\newblock \emph{The Canadian Journal of Statistics}, 35\penalty0 (1):\penalty0
+  151--168, 2007.
+
+\bibitem[Park et~al.(2009)Park, Genton, and Ghosh]{nonpara}
+J.~W. Park, M.~G. Genton, and S.~K. Ghosh.
+\newblock Nonparametric autocovariance estimation from censored time series by
+  gaussian imputation.
+\newblock \emph{Journal of Nonparametric Statistics}, 21\penalty0 (2):\penalty0
+  241--259, 2009.
+
+\end{thebibliography}
